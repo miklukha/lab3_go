@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <title>Лабораторна робота 2</title>
+    <title>Лабораторна робота 3</title>
     <link
       href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
       rel="stylesheet"
@@ -19,37 +19,57 @@
         <div class="col-md-8">
           <div class="card">
             <div class="card-header bg-primary text-white">
-              <h2 class="text-center">Калькулятор валових викидів</h2>
+              <h2 class="text-center">
+                Калькулятор прибутку від сонячних електростанцій
+              </h2>
             </div>
             <div class="card-body">
               <form id="calculatorForm">
                 <div class="mb-3">
-                  <label for="coal" class="form-label">Вугілля, т</label>
+                  <label for="coal" class="form-label"
+                    >Середньодобова потужність, МВт</label
+                  >
                   <input
                     type="number"
                     step="0.01"
                     class="form-control"
-                    id="coal"
+                    id="power"
                     placeholder="Введіть значення"
                   />
                 </div>
                 <div class="mb-3">
-                  <label for="mazut" class="form-label">Мазут, т</label>
+                  <label for="mazut" class="form-label"
+                    >Середньоквадратичне відхилення, МВт</label
+                  >
                   <input
                     type="number"
                     step="0.01"
                     class="form-control"
-                    id="mazut"
+                    id="deviation1"
                     placeholder="Введіть значення"
                   />
                 </div>
                 <div class="mb-3">
-                  <label for="gas" class="form-label">Газ, тис.м^3</label>
+                  <label for="gas" class="form-label"
+                    >Середньоквадратичне відхилення 2, МВт</label
+                  >
                   <input
                     type="number"
                     step="0.01"
                     class="form-control"
-                    id="gas"
+                    id="deviation2"
+                    placeholder="Введіть значення"
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="gas" class="form-label"
+                    >Вартість електроенергії, МВт</label
+                  >
+                  <input
+                    type="number"
+                    step="0.01"
+                    class="form-control"
+                    id="electricity"
                     placeholder="Введіть значення"
                   />
                 </div>
@@ -69,55 +89,19 @@
                 <h3 class="text-center mb-3">Результати розрахунків:</h3>
 
                 <div class="result-section">
-                  <h4>Спалювання вугілля:</h4>
+                  <h4>Прибутки:</h4>
                   <div class="row">
-                    <div class="col-6">Показник емісії твердих частинок</div>
+                    <div class="col-6">до вдосконалення</div>
                     <div
                       class="col-6 text-end text-end-custom"
-                      id="coalEmissionFactor"
+                      id="profitBefore"
                     ></div>
                   </div>
                   <div class="row">
-                    <div class="col-6">Валовий викид</div>
+                    <div class="col-6">після вдосконалення</div>
                     <div
                       class="col-6 text-end text-end-custom"
-                      id="coalEmissionValue"
-                    ></div>
-                  </div>
-                </div>
-
-                <div class="result-section">
-                  <h4>Спалювання мазуту:</h4>
-                  <div class="row">
-                    <div class="col-6">Показник емісії твердих частинок</div>
-                    <div
-                      class="col-6 text-end text-end-custom"
-                      id="mazutEmissionFactor"
-                    ></div>
-                  </div>
-                  <div class="row">
-                    <div class="col-6">Валовий викид</div>
-                    <div
-                      class="col-6 text-end text-end-custom"
-                      id="mazutEmissionValue"
-                    ></div>
-                  </div>
-                </div>
-
-                <div class="result-section">
-                  <h4>Спалювання газу:</h4>
-                  <div class="row">
-                    <div class="col-6">Показник емісії твердих частинок</div>
-                    <div
-                      class="col-6 text-end text-end-custom"
-                      id="gasEmissionFactor"
-                    ></div>
-                  </div>
-                  <div class="row">
-                    <div class="col-6">Валовий викид</div>
-                    <div
-                      class="col-6 text-end text-end-custom"
-                      id="gasEmissionValue"
+                      id="profitAfter"
                     ></div>
                   </div>
                 </div>

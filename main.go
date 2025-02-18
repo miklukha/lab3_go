@@ -7,70 +7,115 @@ import (
 	"net/http"
 )
 
-// корисні копалини
-type Minerals struct {
-	Coal  float64 `json:"coal"`
-	Mazut float64 `json:"mazut"`
-	Gas   float64 `json:"gas"`
+// вхідні дані
+type Data struct {
+	Power       float64 `json:"power"`
+	Electricity float64 `json:"electricity"`
+	Deviation1  float64 `json:"deviation1"`
+	Deviation2  float64 `json:"deviation2"`
 }
 
 // результати розрахунків
 type CalculationResults struct {
-	CoalEmissionFactor  float64 `json:"coalEmissionFactor"`
-	CoalEmissionValue   float64 `json:"coalEmissionValue"`
-	MazutEmissionFactor float64 `json:"mazutEmissionFactor"`
-	MazutEmissionValue  float64 `json:"mazutEmissionValue"`
-	GasEmissionFactor   float64 `json:"gasEmissionFactor"`
-	GasEmissionValue    float64 `json:"gasEmissionValue"`
+	ProfitBefore float64 `json:"profitBefore"`
+	ProfitAfter  float64 `json:"profitAfter"`
 }
 
-func calculateResults(minerals Minerals) CalculationResults {
-	// нижча теплота згоряння робочої маси вугілля
-	coalHeatValue := 20.47
-	// нижча теплота згоряння робочої маси мазуту
-	mazutHeatValue := 39.48
+// функція нормального закону розподілу потужності (формула 9.1)
+func normalDistribution(x, power, sigma float64) float64 {
+	return (1 / (sigma * math.Sqrt(2*math.Pi))) *
+		math.Exp(-(math.Pow(x-power, 2)) / (2*math.Pow(sigma, 2)))
+}
 
-	// частка золи, яка виходить з котла у вигляді леткої золи (вугілля)
-	aCoal := 0.8
-	// частка золи, яка виходить з котла у вигляді леткої золи (мазут)
-	aMazut := 1.0
+// інтегрування
+func integrate(
+	a float64, // нижня межа
+	b float64, // верхня межа
+	n int, // кількість точок для інтегрування
+	power float64,
+	sigma float64,
+) float64 {
+	h := (b - a) / float64(n)
+	sum := (normalDistribution(a, power, sigma) +
+		normalDistribution(b, power, sigma)) / 2
 
-	// масовий вміст горючих речовин у леткій золі (вугілля)
-	flammableSubstancesCoal := 1.5
-	// масовий вміст горючих речовин у леткій золі (мазут)
-	flammableSubstancesMazut := 0.0
+	for i := 1; i < n; i++ {
+		x := a + float64(i)*h
+		sum += normalDistribution(x, power, sigma)
+	}
 
-	// масовий вміст золи в паливі на робочу масу, % (вугілля)
-	arCoal := 25.2
-	// масовий вміст золи в паливі на робочу масу, % (мазут)
-	arMazut := 0.15
+	return h * sum
+}
 
-	// ефективність очищення димових газів від твердих частинок
-	n := 0.985
+func calculateEnergyWithoutImbalance(
+	power float64,
+	sigma float64,
+	lowerBound float64,
+	upperBound float64,
+) float64 {
+	return integrate(
+		lowerBound,
+		upperBound,
+		100000, // кількість точок для інтегрування
+		power,
+		sigma,
+	) * 100 // переводимо у відсотки
+}
 
-	// емісія твердих частинок (вугілля)
-	coalEmissionFactor := (math.Pow(10.0, 6) / coalHeatValue) * aCoal * (arCoal / (100 - flammableSubstancesCoal)) * (1 - n)
-	// валовий викид твердих частинок (вугілля)
-	coalEmissionValue := math.Pow(10.0, -6) * coalEmissionFactor * coalHeatValue * minerals.Coal
+func calculateResults(data Data) CalculationResults {
+	// діапазони
+	lowerBound := 4.75
+	upperBound := 5.25
 
-	// емісія твердих частинок (мазут)
-	mazutEmissionFactor := (math.Pow(10.0, 6) / mazutHeatValue) * aMazut * (arMazut / (100 - flammableSubstancesMazut)) * (1 - n)
-	// валовий викид твердих частинок (мазут)
-	mazutEmissionValue := math.Pow(10.0, -6) * mazutEmissionFactor * mazutHeatValue * minerals.Mazut
+	// розрахунок частки енергії без небалансів до покращення (δW1)
+	energyWithoutImbalance1 := math.Round(calculateEnergyWithoutImbalance(
+		data.Power,
+		data.Deviation1,
+		lowerBound,
+		upperBound,
+	))
 
-	// при спалюванні природного газу тверді частинки відсутні, тоді
-	// емісія твердих частинок (газ)
-	gasEmissionFactor := 0.0
-	// валовий викид твердих частинок (газ)
-	gasEmissionValue := 0.0
+	// розрахунок частки енергії без небалансів після покращення (δW2)
+	energyWithoutImbalance2 := math.Round(calculateEnergyWithoutImbalance(
+		data.Power,
+		data.Deviation2,
+		lowerBound,
+		upperBound,
+	))
+
+	// енергія W1
+	energy1 := data.Power * 24 * energyWithoutImbalance1 / 100
+
+	// прибуток П1
+	profit1 := energy1 * data.Electricity
+
+	// енергія W2
+	energy2 := data.Power * 24 * (1 - energyWithoutImbalance1/100)
+
+	// штраф Ш1
+	fine1 := energy2 * data.Electricity
+
+	// загальний прибуток перед покращенням
+	profitBefore := profit1 - fine1
+
+	// енергія W3
+	energy3 := data.Power * 24 * energyWithoutImbalance2 / 100
+
+	// прибуток П2
+	profit2 := energy3 * data.Electricity
+
+	// енергія W4
+	energy4 := data.Power * 24 * (1 - energyWithoutImbalance2/100)
+
+	// штраф Ш2
+	fine2 := energy4 * data.Electricity
+
+	// загальний прибуток після покращення
+	profitAfter := profit2 - fine2
 
 	return CalculationResults{
-		CoalEmissionFactor:  coalEmissionFactor,
-		CoalEmissionValue:   coalEmissionValue,
-		MazutEmissionFactor: mazutEmissionFactor,
-		MazutEmissionValue:  mazutEmissionValue,
-		GasEmissionFactor:   gasEmissionFactor,
-		GasEmissionValue:    gasEmissionValue,
+		ProfitBefore: profitBefore,
+		ProfitAfter:  profitAfter,
 	}
 }
 
@@ -80,14 +125,14 @@ func calculatorHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var minerals Minerals
-	err := json.NewDecoder(r.Body).Decode(&minerals)
+	var data Data
+	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	results := calculateResults(minerals)
+	results := calculateResults(data)
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(results)

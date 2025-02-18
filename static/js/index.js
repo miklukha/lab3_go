@@ -5,10 +5,12 @@ document.addEventListener('DOMContentLoaded', function () {
   form.addEventListener('submit', function (e) {
     e.preventDefault();
 
-    const minerals = {
-      coal: parseFloat(document.getElementById('coal').value) || 0,
-      mazut: parseFloat(document.getElementById('mazut').value) || 0,
-      gas: parseFloat(document.getElementById('gas').value) || 0,
+    const data = {
+      power: parseFloat(document.getElementById('power').value) || 0,
+      electricity:
+        parseFloat(document.getElementById('electricity').value) || 0,
+      deviation1: parseFloat(document.getElementById('deviation1').value) || 0,
+      deviation2: parseFloat(document.getElementById('deviation2').value) || 0,
     };
 
     fetch('/calculator', {
@@ -16,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(minerals),
+      body: JSON.stringify(data),
     })
       .then(response => {
         if (!response.ok) {
@@ -33,23 +35,10 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   function displayResults(results) {
-    // спалювання вугілля
-    document.getElementById('coalEmissionFactor').textContent =
-      results.coalEmissionFactor.toFixed(2) + ' г/ГДж';
-    document.getElementById('coalEmissionValue').textContent =
-      results.coalEmissionValue.toFixed(2) + ' т';
-
-    // спалювання мазуту
-    document.getElementById('mazutEmissionFactor').textContent =
-      results.mazutEmissionFactor.toFixed(2) + ' г/ГДж';
-    document.getElementById('mazutEmissionValue').textContent =
-      results.mazutEmissionValue.toFixed(2) + ' т';
-
-    // спалювання газу
-    document.getElementById('gasEmissionFactor').textContent =
-      results.gasEmissionFactor.toFixed(2) + ' г/ГДж';
-    document.getElementById('gasEmissionValue').textContent =
-      results.gasEmissionValue.toFixed(2) + ' т';
+    document.getElementById('profitBefore').textContent =
+      results.profitBefore.toFixed(2) + ' тис.грн';
+    document.getElementById('profitAfter').textContent =
+      results.profitAfter.toFixed(2) + ' тис.грн';
 
     resultsDiv.style.display = 'block';
   }
